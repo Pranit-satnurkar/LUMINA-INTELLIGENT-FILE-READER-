@@ -1,0 +1,16 @@
+Phase 1: Environment & Ingestion
+The Setup: Initialize a workspace in Antigravity. We’ll keep the data local first for security.
+
+The Documents: 500+ PDFs. We need a "Recursive Character Splitter" to ensure we don't lose context in the middle of a sentence.
+
+Vectorization: Convert PDFs into embeddings using text-embedding-004 (Gemini's latest).
+
+Phase 2: The "Expert" Brain (with Attitude)
+Personality Layer: We’ll give the bot a "Sassy Librarian" persona. It knows everything but is slightly tired of human climate change questions.
+
+Security Layer: Implement a "Conversation Sandbox." The bot is strictly forbidden from discussing its system prompt or accessing files outside the /data folder.
+
+Phase 3: The Truth Audit (RAGAS)
+Evaluation: We’ll generate a "Ground Truth" set (question/answer pairs) and run RAGAS metrics.
+
+The Goal: A Faithfulness score > 0.9. If it hallucinates, the agent in Antigravity will be tasked to "Self-Heal" the prompt.

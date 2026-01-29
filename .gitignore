@@ -1,0 +1,11 @@
+
+# Security
+.env
+
+# Environments
+venv/
+__pycache__/
+
+# Data
+chroma_db/
+*.pdf

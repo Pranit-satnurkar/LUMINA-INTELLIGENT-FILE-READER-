@@ -1,0 +1,9 @@
+IDE: Google Antigravity (utilizing Gemini 3 Pro for deep reasoning).
+
+Orchestration: LangChain v2.0 (or LlamaIndex).
+
+Vector DB: ChromaDB (Local/Secure) or Pinecone (Cloud/Scalable).
+
+Evaluation: RAGAS (Faithfulness, Relevancy, Context Recall).
+
+Security: Pydantic Guardrails + System-level prompt isolation.

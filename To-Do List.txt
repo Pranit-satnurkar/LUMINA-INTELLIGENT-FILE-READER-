@@ -1,0 +1,9 @@
+[ ] Setup Workspace: Create folders /docs, /scripts, and /chroma_db.
+
+[ ] Ingestion Script: Write ingest.py to load PDFs, chunk them (size: 1000, overlap: 200), and save to Chroma.
+
+[ ] Chat Logic: Write expert_bot.py using a RetrievalQA chain with a custom "System Prompt."
+
+[ ] Guardrails: Add a validation layer to check if the response actually contains citations.
+
+[ ] RAGAS Audit: Run a notebook to generate the "Truthfulness Repor

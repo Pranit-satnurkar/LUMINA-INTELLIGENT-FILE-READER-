@@ -1,0 +1,15 @@
+langchain
+langchain-community
+langchain-core
+langchain-groq
+langchain-experimental
+rank_bm25
+pdfplumber
+reportlab
+flashrank
+faiss-cpu
+sentence-transformers
+streamlit
+python-dotenv
+ragas
+# langchain-google-genai # Optional, removed for now
