@@ -13,5 +13,6 @@ streamlit
 python-dotenv
 ragas
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
+pypdf2
