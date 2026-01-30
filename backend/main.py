@@ -4,12 +4,14 @@ import uvicorn
 import shutil
 import os
 import io
-from .pdf_processor import PDFProcessor
-from .bot import chat_with_bot, DB_DIR, EMBEDDING_MODEL
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
 
 app = FastAPI(title="Lumina API Brain")
+
+# Add health check immediately
+@app.get("/")
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "LUMINA Backend"}
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,17 +23,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Try to import backend modules
+try:
+    from .pdf_processor import PDFProcessor
+    from .bot import chat_with_bot, DB_DIR, EMBEDDING_MODEL
+    from langchain_community.vectorstores import FAISS
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    IMPORTS_OK = True
+except Exception as e:
+    print(f"⚠️ Warning: Could not import backend modules: {e}")
+    IMPORTS_OK = False
+    PDFProcessor = None
+    chat_with_bot = None
+    DB_DIR = ".faiss_storage"
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+
 # Global Vector Store (In-Memory for now, or loaded from disk)
 vector_store = None
 
-# Initialize Vector Store if exists
-if os.path.exists(DB_DIR):
+# Initialize Vector Store if exists (only if imports worked)
+if IMPORTS_OK and os.path.exists(DB_DIR):
     try:
         embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
         vector_store = FAISS.load_local(DB_DIR, embeddings, allow_dangerous_deserialization=True)
         print("✅ Loaded existing Vector Store.")
     except Exception as e:
-        print(f"⚠️ Could not load Vector Store: {e}")
+        print(f"⚠️ Could not load vector store: {e}")
 
 class ChatRequest(BaseModel):
     message: str
