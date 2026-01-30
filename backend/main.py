@@ -101,12 +101,20 @@ async def chat(request: ChatRequest):
     return {"answer": response.get('answer', 'No answer generated.'), "citations": response.get('context', [])}
 
 @app.delete("/session")
-def clear_session():
+async def delete_session():
     global vector_store
-    vector_store = None
-    if os.path.exists(DB_DIR):
-        shutil.rmtree(DB_DIR)
-    return {"message": "Memory cleared."}
+    try:
+        vector_store = None
+        # Optionally delete from disk
+        if os.path.exists(DB_DIR):
+            shutil.rmtree(DB_DIR)
+        return {"message": "Session cleared"}
+    except Exception as e:
+        print(f"Error deleting session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
+# For Render deployment - bind to PORT environment variable
 if __name__ == "__main__":
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port)
