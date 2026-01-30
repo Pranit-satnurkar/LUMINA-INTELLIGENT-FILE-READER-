@@ -1,0 +1,5 @@
+[build]
+builder = "NIXPACKS"
+
+[build.nixpacksConfig]
+installCommand = "pip install -r requirements-prod.txt"
