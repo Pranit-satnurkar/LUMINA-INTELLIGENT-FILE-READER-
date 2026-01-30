@@ -23,14 +23,11 @@ st.set_page_config(
 def load_embeddings():
     """Load and cache the embedding model to boost performance."""
     try:
-        # Phase 1: Try aggressive local loading (Fastest, avoids network timeouts)
-        # This fixes the 'httpx.ReadTimeout' if the model is already downloaded
         return HuggingFaceEmbeddings(
             model_name="all-MiniLM-L6-v2",
             model_kwargs={'local_files_only': True}
         )
     except Exception:
-        # Phase 2: Fallback to network download if local file is missing
         return HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 # Initialize Retrieval
@@ -41,8 +38,12 @@ if "embeddings" not in st.session_state:
     with st.spinner("Waking up Lumina..."):
         st.session_state.embeddings = load_embeddings()
 
+# Initialize Chat History (Critical for Hero Section Logic)
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
 # -----------------------------------------------------------------------------
-# CUSTOM CSS: THE 10-POINT POLISH
+# CUSTOM CSS: V4 DARK TECH REVOLUTION
 # -----------------------------------------------------------------------------
 st.markdown("""
 <style>
@@ -50,150 +51,242 @@ st.markdown("""
     :root {
         --primary: #000000;
         --secondary: #555555;
-        --accent: #2563eb; /* Electric Blue for subtle accents */
+        --accent: #2563eb; /* Electric Blue */
+        --accent-hover: #1d4ed8;
+        --danger: #ef4444;
         --bg-color: #ffffff;
-        --grid-color: #f6f6f6; /* Super subtle grid */
+        --grid-color: #f3f4f6;
+        --panel-bg: #151515;
+        --panel-border: #2a2a2a;
+        --text-body: #a1a1aa;
+        --text-head: #ffffff;
     }
 
     /* 1. UNIVERSAL RESET & FONTS */
     html, body, [class*="css"] {
         font-family: 'Manrope', sans-serif !important;
         background-color: var(--bg-color) !important;
-        color: var(--primary) !important;
     }
     
-    /* 2. BACKGROUND GRID (Subtle Canvas) */
-    .stApp, div[data-testid="stAppViewContainer"], div[data-testid="stHeader"] {
+    /* 2. BACKGROUND GRID (Subtle Tech Texture) */
+    .stApp, div[data-testid="stAppViewContainer"] {
         background-color: #ffffff !important;
         background-image: 
             linear-gradient(var(--grid-color) 1px, transparent 1px),
             linear-gradient(90deg, var(--grid-color) 1px, transparent 1px) !important;
-        background-size: 50px 50px !important;
+        background-size: 40px 40px !important;
     }
 
-    /* 3. SIDEBAR STYLING */
+    /* 3. SIDEBAR (The Control Center) */
     section[data-testid="stSidebar"] {
-        background-color: #fafafa !important; /* Very slight tint */
+        background-color: #fafafa !important;
         border-right: 1px solid #e5e5e5;
     }
     section[data-testid="stSidebar"] * {
-        color: #000000 !important;
+        color: #0d0d0d;
     }
 
-    /* 4. FILE UPLOADER (The "Big Opportunity") */
+    /* 4. "Step 1" UPLOAD PANEL (Active State) */
     [data-testid='stFileUploader'] {
-        background-color: #f0f2f6 !important; /* Soft tint wrapper */
-        border: 2px dashed #d1d5db !important;
-        border-radius: 16px !important;
+        background-color: #f0f9ff !important; /* Light Blue Tint */
+        border: 2px dashed #bae6fd !important;
+        border-radius: 12px !important;
         padding: 20px !important;
+        transition: all 0.3s ease;
     }
-    /* FORCE INTERNAL DROPZONE TO BE LIGHT */
+    [data-testid='stFileUploader']:hover {
+        border-color: var(--accent) !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+    }
+    /* Force Dropzone text styles AND Backgrounds */
     [data-testid='stFileUploader'] section, 
-    [data-testid='stFileUploader'] div, 
-    [data-testid='stFileUploader'] span, 
+    [data-testid='stFileUploader'] div,
+    [data-testid='stFileUploader'] span,
     [data-testid='stFileUploader'] small {
-        background-color: transparent !important; /* Let soft tint show */
-        color: #000000 !important; /* FORCE BLACK TEXT */
+        color: #0f172a !important; /* Dark Slate to contrast with Light Blue */
+        background-color: transparent !important; /* Remove ANY dark angular backgrounds */
     }
-    /* "Browse files" Button */
+    
+    /* Target the SVG icon specifically if needed */
+    [data-testid='stFileUploader'] svg {
+        fill: #2563eb !important; /* Make upload icon blue */
+    }
     [data-testid='stFileUploader'] button {
-        background-color: #000000 !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 8px 16px !important;
+        /* "Browse files" button style inside uploader */
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
         font-weight: 600 !important;
     }
 
-    /* 5. GHOST BUTTON (Secondary Actions - "Clear Memory") */
-    .stButton button {
-        background-color: transparent !important;
-        color: #6b7280 !important;
-        border: 1px solid #e5e7eb !important;
+    /* 5. PRIMARY BUTTON ("Analyze Document") */
+    div[data-testid="stSidebar"] button[kind="primary"] {
+        background-color: var(--accent) !important;
+        color: #ffffff !important;
+        border: none !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        padding: 12px 20px !important;
         border-radius: 8px !important;
-        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3) !important;
+        transition: all 0.3s ease !important;
     }
-    .stButton button:hover {
-        border-color: #000000 !important;
-        color: #000000 !important;
-        background-color: #ffffff !important;
+    div[data-testid="stSidebar"] button[kind="primary"]:hover {
+        background-color: var(--accent-hover) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4) !important;
     }
-    /* Specific target for PRIMARY buttons if we add any manually */
-    /* Note: File uploader button is targeted separately above */
 
-    /* 6. CHAT INTERFACE */
-    /* User Message */
-    div[data-testid="stChatMessage"]:nth-child(odd) div[data-testid="stMarkdownContainer"] {
-        background-color: #000000 !important;
-        color: #ffffff !important;
-        border-radius: 20px 20px 4px 20px;
-        padding: 16px 24px;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
+    /* 6. DESTRUCTIVE BUTTON ("Clear Session") */
+    /* Target ONLY the specific Clear button if possible, or generic secondary buttons NOT in uploader */
+    section[data-testid="stSidebar"] button[kind="secondary"]:not([data-testid="baseButton-secondary"]) {
+        background-color: transparent !important;
+        border: 1px solid #fecaca !important;
+        color: #ef4444 !important;
+        font-size: 0.9em !important;
     }
-    div[data-testid="stChatMessage"]:nth-child(odd) * {
-        color: #ffffff !important;
+    /* Specific override for clear button to be safe, using adjacent sibling or order? 
+       Streamlit doesn't give IDs. Let's rely on the specific uploader override below taking precedence 
+       due to specificity or !important if we scope it tightly. 
+    */
+    
+    /* BETTER: Just style the Uploader Button to win the specificity war */
+    [data-testid='stFileUploader'] button {
+        background-color: #ffffff !important;
+        color: #0f172a !important; /* Force Dark Text, NOT Red */
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 600 !important;
+    }
+
+    /* 7. CHAT - USER BUBBLE (Right Aligned, Light) */
+    div[data-testid="stChatMessage"]:nth-child(odd) {
+        flex-direction: row-reverse; /* Streamlit native reversal? No, CSS hacking */
+        background-color: transparent;
+    }
+    div[data-testid="stChatMessage"]:nth-child(even) {
+        background-color: transparent;
     }
     
-    /* Lumina Message */
-    div[data-testid="stChatMessage"]:nth-child(even) div[data-testid="stMarkdownContainer"] {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #e5e5e5;
-        border-radius: 20px 20px 20px 4px;
-        padding: 16px 24px;
-        box-shadow: 0 5px 20px -5px rgba(0,0,0,0.05);
+    /* User Message Container */
+    div[data-testid="stChatMessage"]:nth-child(odd) div[data-testid="stMarkdownContainer"] {
+        background-color: #e5e5e5 !important; /* Lighter Gray */
+        color: #171717 !important;
+        border-radius: 18px 18px 0px 18px !important;
+        padding: 12px 20px !important;
+        max-width: 80% !important;
+        margin-left: auto !important; /* Push to right */
+        box-shadow: none !important;
+        border: 1px solid #d4d4d4;
     }
 
-    /* 7. INPUT BAR (Bottom) */
+    /* 8. CHAT - AI PANEL (Dark Tech) */
+    /* This overrides the default Assistant message */
+    div[data-testid="stChatMessage"]:nth-child(even) div[data-testid="stMarkdownContainer"] {
+        background-color: var(--panel-bg) !important;
+        color: var(--text-body) !important;
+        border: 1px solid var(--panel-border) !important;
+        border-radius: 16px !important;
+        padding: 28px !important;
+        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* AI Panel Typography */
+    div[data-testid="stChatMessage"]:nth-child(even) h1, 
+    div[data-testid="stChatMessage"]:nth-child(even) h2, 
+    div[data-testid="stChatMessage"]:nth-child(even) h3, 
+    div[data-testid="stChatMessage"]:nth-child(even) h4 {
+        color: var(--text-head) !important;
+        font-weight: 700;
+        margin-top: 20px;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+    }
+    div[data-testid="stChatMessage"]:nth-child(even) p {
+        line-height: 1.7; /* Readability */
+        margin-bottom: 16px;
+    }
+    div[data-testid="stChatMessage"]:nth-child(even) strong {
+        color: #ffffff !important;
+        font-weight: 600;
+        text-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+    
+    /* "Experience Details" Data Block Simulation with CSS */
+    /* Target lists in AI message to look like data blocks */
+    div[data-testid="stChatMessage"]:nth-child(even) ul {
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 16px 20px;
+        list-style-type: none; /* Hide default bullets */
+    }
+    div[data-testid="stChatMessage"]:nth-child(even) li {
+        color: #d4d4d4;
+        padding: 8px 0;
+        border-bottom: 1px solid #333;
+        display: flex;
+    }
+    div[data-testid="stChatMessage"]:nth-child(even) li:last-child {
+        border-bottom: none;
+    }
+    
+    /* Decoration: AI Icon Label */
+    div[data-testid="stChatMessage"]:nth-child(even) div[data-testid="stMarkdownContainer"]::before {
+        content: "✨ SYSTEM ANALYSIS"; 
+        display: block;
+        font-size: 10px;
+        color: var(--accent);
+        font-weight: 800;
+        letter-spacing: 1px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--panel-border);
+        padding-bottom: 12px;
+    }
+
+    /* 9. VIEW EVIDENCE BUTTON (Expander Hack) */
+    .streamlit-expanderHeader {
+        background-color: transparent !important;
+        border: 1px solid var(--secondary) !important;
+        border-radius: 8px !important;
+        color: var(--text-body) !important;
+        font-size: 14px !important;
+        padding: 8px 16px !important;
+        margin-top: 10px;
+        display: inline-block; /* Look like button */
+    }
+    .streamlit-expanderHeader:hover {
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+        background-color: #1a1a1a !important;
+    }
+
+    /* 10. INPUT BAR POLISH */
     [data-testid="stChatInput"] textarea {
         background-color: #ffffff !important;
         color: #000000 !important;
-        border: 1px solid #e5e5e5 !important;
-        border-radius: 12px !important;
-        padding: 12px 16px !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        caret-color: #000000 !important;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        padding: 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
     [data-testid="stChatInput"] textarea:focus {
-        border-color: #000000 !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border-color: var(--primary) !important;
     }
-    /* FIX PLACEHOLDER VISIBILITY */
+    /* FIX PLACEHOLDER VISIBILITY (Re-added) */
     [data-testid="stChatInput"] textarea::placeholder {
         color: #6b7280 !important;
-        opacity: 1 !important; /* Firefox override */
-        font-weight: 500;
+        opacity: 1 !important;
     }
-    ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    ::-webkit-input-placeholder {
         color: #6b7280 !important;
         opacity: 1 !important;
     }
     
-    /* 8. TYPOGRAPHY UTILS */
-    h1, h2, h3 { font-family: 'Space Grotesk', sans-serif !important; }
-    
-    /* 9. ANIMATIONS */
-    @keyframes pulse {
-        0% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.7; transform: scale(0.95); }
-        100% { opacity: 1; transform: scale(1); }
-    }
-    .pulsing-dot {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        background-color: #10b981;
-        border-radius: 50%;
-        margin-left: 8px;
-        animation: pulse 2s infinite;
-    }
-    
-    /* 10. HIDE JUNK */
+    /* HIDE JUNK */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    /* Re-enable header for sidebar toggle */
     header[data-testid="stHeader"] { background: transparent !important; }
-    [data-testid="collapsedControl"] { color: #000 !important; }
 
 </style>
 """, unsafe_allow_html=True)
@@ -202,46 +295,62 @@ st.markdown("""
 # SIDEBAR CONTENT
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    # Branding Polish
+    # Branding
     st.markdown("""
     <div style="margin-bottom: 20px;">
-        <h2 style="font-weight: 800; margin: 0; font-size: 24px; letter-spacing: -1px;">LUMINA</h2>
-        <p style="font-size: 12px; color: #6b7280; margin: 0; font-weight: 500;">
-            INTELLIGENT FILE READER <span style="color: #2563eb;">v3.0</span>
+        <h2 style="font-weight: 900; margin: 0; font-size: 26px; letter-spacing: -1.5px; color: #000;">LUMINA</h2>
+        <p style="font-size: 11px; color: #666; margin: 0; font-weight: 600; letter-spacing: 1px;">
+            INTELLIGENT WORKSPACE <span style="color: #2563eb;">V4.0</span>
         </p>
     </div>
     """, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # Upload Section ("The Big Opportunity")
-    st.markdown("**📄 Document Context**")
-    uploaded_file = st.file_uploader("Upload a document to begin", type="pdf")
+    # STEP 1: UPLOAD (Visual Guide)
+    st.markdown("""
+    <div style="margin-bottom: 8px;">
+        <span style="background: #eff6ff; color: #2563eb; font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">STEP 1</span>
+        <span style="font-size: 14px; font-weight: 700; color: #0f172a; margin-left: 8px;">Upload Document</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader("Drag & drop PDF here", type="pdf")
     
     if uploaded_file:
+        st.markdown(f"""
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px; margin-top: 10px; display: flex; align-items: center;">
+            <div style="font-size: 20px; margin-right: 10px;">📄</div>
+            <div>
+                <div style="font-size: 12px; font-weight: 700; color: #166534;">{uploaded_file.name[:18]}...</div>
+                <div style="font-size: 10px; color: #15803d;">Ready for analysis</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
         st.markdown("<br>", unsafe_allow_html=True)
-        # Primary Action Button
-        # We use a little hack to make this button look primary via inline CSS injection later if needed,
-        # but the general stButton style is now 'Ghost'. 
-        # For the primary 'Process' button, we might want it bold.
-        if st.button("⚡ Analyze Document", use_container_width=True):
-            with st.spinner("Processing..."):
+        
+        # PRIMARY BUTTON: ANALYZE
+        if st.button("⚡ ANALYZE DOCUMENT", type="primary", use_container_width=True):
+            with st.spinner("Decoding Knowledge Matrix..."):
                 try:
                     processor = PDFProcessor()
                     chunks = processor.process_pdf(uploaded_file, uploaded_file.name)
                     if chunks:
                         st.session_state.vector_store = FAISS.from_documents(chunks, st.session_state.embeddings)
-                        st.success(f"Ready. {len(chunks)} chunks loaded.")
+                        st.success(f"Processing Complete. {len(chunks)} fragments indexed.")
                         st.session_state.messages = [] 
                     else:
-                        st.error("Document is empty.")
+                        st.error("Empty Document Warning.")
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    st.error(f"System Error: {e}")
     
-    st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='flex-grow: 1; height: 50px;'></div>", unsafe_allow_html=True) # Spacer
+    st.markdown("---")
     
-    # Clear Memory (Destructive - placed low)
-    if st.button("Clear Session Memory", use_container_width=True):
+    # DESTRUCTIVE ACTION (Styled CSS targets secondary buttons in sidebar)
+    st.markdown("<small style='color: #94a3b8; font-weight: 600; display: block; margin-bottom: 5px;'>SESSION CONTROLS</small>", unsafe_allow_html=True)
+    if st.button("🗑️ Clear Session Memory", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
@@ -252,47 +361,47 @@ with st.sidebar:
 # Top Nav / Status
 c1, c2 = st.columns([1, 1])
 with c1:
-    # "System Online" - Alive Status
     st.markdown("""
-    <div style="display: flex; align-items: center; color: #374151; font-weight: 600; font-size: 14px;">
-        SYSTEM ONLINE <span class="pulsing-dot"></span>
+    <div style="display: flex; align-items: center; color: #111; font-weight: 700; font-size: 14px;">
+        STATUS: ONLINE <span class="pulsing-dot"></span>
     </div>
     """, unsafe_allow_html=True)
 with c2:
-    # Mode Dropdown Simulation
     st.markdown("""
     <div style="text-align: right; cursor: pointer; color: #111;">
-        <span style="font-size: 12px; color: #6b7280; margin-right: 5px;">MODE</span>
-        <b>PRECISE</b> <span style="font-size: 10px;">▼</span>
+        <span style="font-size: 11px; color: #94a3b8; margin-right: 8px; font-weight: 700;">MODEL</span>
+        <b style="color: #000;">PRECISE v3</b> <span style="font-size: 10px; color: #2563eb;">▼</span>
     </div>
     """, unsafe_allow_html=True)
 
 st.write("") # Spacer
 
-# Hero Section (Balanced Hierarchy)
-st.markdown("""
-<div style="padding: 40px 0px 60px 0px;">
-    <h1 style="font-size: 80px; line-height: 0.9; color: #000; letter-spacing: -3px; font-weight: 800; margin-bottom: 24px;">
-        ASK.<br>
-        <span style="color: #404040;">ANALYZE.</span><br>
-        <span style="color: #737373;">SOLVE.</span>
-    </h1>
-    <p style="font-size: 22px; font-weight: 500; color: #4b5563; line-height: 1.5; max-width: 600px;">
-        Your creative partner for complex documents.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+# Hero Section
+if not st.session_state.messages:
+    st.markdown("""
+    <div style="padding: 60px 0px; text-align: left;">
+        <h1 style="font-size: 72px; line-height: 0.95; color: #000; letter-spacing: -3px; font-weight: 800; margin-bottom: 24px;">
+            RAW DATA.<br>
+            <span style="color: #2563eb;">REFINED INSIGHT.</span>
+        </h1>
+        <p style="font-size: 20px; font-weight: 500; color: #64748b; line-height: 1.6; max-width: 500px;">
+            Upload your complex PDFs. Let Lumina structure, analyze, and extract the truth.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Chat History
+# (Initialized at top of APP LOGIC)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for message in st.session_state.messages:
+    # Role-specific rendering happens via CSS
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Input Area styling via CSS above (Placeholder text change below)
-if prompt := st.chat_input("Ask about your uploaded document..."):
+# Input
+if prompt := st.chat_input("Query your document..."):
     # User
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -304,8 +413,7 @@ if prompt := st.chat_input("Ask about your uploaded document..."):
         full_response = ""
         source_docs = []
         
-        # Micro-interaction: Loading state
-        message_placeholder.markdown("`Thinking...`")
+        message_placeholder.markdown("`Computing...`")
         
         try:
             if st.session_state.vector_store:
@@ -316,9 +424,9 @@ if prompt := st.chat_input("Ask about your uploaded document..."):
                 else:
                     response_text = str(response)
             else:
-                response_text = "Please upload a document to begin the analysis."
+                response_text = "⚠️ No data source detected. Please upload a document in the sidebar."
         except Exception as e:
-            response_text = f"Error: {str(e)}"
+            response_text = f"Processing Error: {str(e)}"
 
         # Streaming Output
         for char in response_text:
@@ -330,12 +438,11 @@ if prompt := st.chat_input("Ask about your uploaded document..."):
         
         st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-        # Evidence / Citations
+        # Evidence / Citations (Styled as Button Action)
         if source_docs:
             st.markdown("<br>", unsafe_allow_html=True)
-            with st.expander("View Supported Evidence"):
+            with st.expander("🔍 View Verified Sources"):
                 for doc in source_docs:
-                    src = os.path.basename(doc.metadata.get("source", "Doc"))
-                    pg = doc.metadata.get("page", "?")
-                    st.caption(f"**{src}** (Page {pg})")
+                    src = os.path.basename(doc.metadata.get("source", "File"))
+                    st.caption(f"**SOURCE: {src}**")
                     st.markdown(f"> *{doc.page_content[:200].replace(chr(10), ' ')}...*")

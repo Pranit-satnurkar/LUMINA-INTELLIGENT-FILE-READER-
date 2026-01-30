@@ -12,4 +12,6 @@ sentence-transformers
 streamlit
 python-dotenv
 ragas
-# langchain-google-genai # Optional, removed for now
+fastapi
+uvicorn
+python-multipart

@@ -48,25 +48,28 @@ def get_rag_chain(vector_store):
     
     retriever = vector_store.as_retriever(search_kwargs={"k": 5})
 
-    # Standard RAG Chain
-    llm = ChatGroq(model=LLM_MODEL, temperature=0.7)
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", SYSTEM_PROMPT),
-        ("human", "{input}"),
-    ])
-    
-    rag_chain = (
-        RunnableParallel({"context": retriever, "input": RunnablePassthrough()})
-        .assign(context_str=lambda x: format_docs(x["context"]))
-        .assign(answer=(
-            prompt 
-            | llm 
-            | StrOutputParser()
-        ))
+    # Create Retriever Tool
+    from langchain_core.tools import create_retriever_tool
+    retriever_tool = create_retriever_tool(
+        retriever,
+        "search_documents",
+        "Searches and returns excerpts from the loaded documents. Always use this to answer questions based on the context."
     )
     
-    return rag_chain
+    tools = expert_tools + [retriever_tool]
+
+    # Agent
+    from langchain.agents import create_agent
+    
+    llm = ChatGroq(model=LLM_MODEL, temperature=0.7)
+    
+    graph = create_agent(
+        model=llm,
+        tools=tools,
+        system_prompt=SYSTEM_PROMPT
+    )
+    
+    return graph
 
 def chat_with_bot(query, vector_store):
     try:
@@ -76,9 +79,12 @@ def chat_with_bot(query, vector_store):
         chain = get_rag_chain(vector_store)
         
         # Invoke
-        result = chain.invoke(query)
+        # LangGraph expects 'messages' key
+        result = chain.invoke({"messages": [{"role": "user", "content": query}]})
         
-        return {'answer': result['answer'], 'context': result['context']}
+        # Extract answer from last message
+        last_msg = result['messages'][-1]
+        return {'answer': last_msg.content, 'context': []}
 
     except Exception as e:
          return f"System Error: {str(e)}"
