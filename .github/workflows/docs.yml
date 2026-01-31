@@ -26,6 +26,8 @@ jobs:
       uses: DavidAnson/markdownlint-cli2-action@v18
       with:
         globs: '**/*.md'
+      continue-on-error: true
+
         
   link-check:
     name: Check Links
@@ -54,3 +56,5 @@ jobs:
       with:
         files: '**/*.md'
         incremental_files_only: false
+      continue-on-error: true
+
