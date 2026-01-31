@@ -1,0 +1,52 @@
+# Codecov Configuration for LUMINA
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"
+  
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 5%
+        base: auto
+        
+    patch:
+      default:
+        target: 50%
+        threshold: 10%
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+ignore:
+  - "tests/"
+  - "**/__pycache__/"
+  - "**/node_modules/"
+  - "**/*.test.js"
+  - "**/*.spec.js"
+  - "mobile-app/**"
+  - "venv/**"
+  - "scripts/**"
+  - "debug_*.py"
+  - "test_*.py"
+  - "check_*.py"
+  - "create_dummy_*.py"
+  - "list_models.py"
+  - "evaluate.py"
+
+flags:
+  backend:
+    paths:
+      - backend/
+    carryforward: true
+    
+  api:
+    paths:
+      - api/
+    carryforward: true

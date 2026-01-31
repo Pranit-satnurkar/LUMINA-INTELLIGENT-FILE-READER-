@@ -8,6 +8,7 @@
   ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
   ![Python](https://img.shields.io/badge/Python-3.8+-yellow?style=for-the-badge&logo=python)
   ![React Native](https://img.shields.io/badge/React_Native-0.81-61DAFB?style=for-the-badge&logo=react)
+  [![codecov](https://codecov.io/gh/Pranit-satnurkar/LUMINA-INTELLIGENT-FILE-READER-/branch/main/graph/badge.svg)](https://codecov.io/gh/Pranit-satnurkar/LUMINA-INTELLIGENT-FILE-READER-)
 </div>
 
 ---
@@ -51,7 +52,44 @@
 
 ---
 
+## 📸 Screenshots
+
+### Web Interface
+
+<div align="center">
+
+**Home & Upload Interface**
+
+![Web Home](screenshots/web-home.png)
+
+**AI Chat with Document Analysis**
+
+![Web Chat](screenshots/web-chat.png)
+
+</div>
+
+### Mobile App
+
+<div align="center">
+
+**Document Upload**
+
+<img src="screenshots/mobile-home.png" width="300" alt="Mobile Home"/>
+
+**Chat Interface**
+
+<img src="screenshots/mobile-chat.png" width="300" alt="Mobile Chat"/>
+
+**Settings**
+
+<img src="screenshots/mobile-settings.png" width="300" alt="Mobile Settings"/>
+
+</div>
+
+---
+
 ## 🏗️ Architecture
+
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
